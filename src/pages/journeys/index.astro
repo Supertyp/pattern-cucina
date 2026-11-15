@@ -1,0 +1,72 @@
+---
+import { url } from '../../lib/url';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getJourneys } from '../../lib/patterns';
+import { LEVELS } from '../../content.config';
+
+const journeys = await getJourneys();
+const byLevel = LEVELS.map((level) => ({ level, journeys: journeys.filter((j) => j.data.level === level) })).filter(
+  (g) => g.journeys.length > 0,
+);
+const levelIntro: Record<string, string> = {
+  'first steps': 'Short dishes with few ingredients. Each one teaches a handful of core techniques you will use again and again.',
+  'building skills': 'Dishes that combine several techniques and need some timing. Most reuse patterns from the first steps.',
+  'confident cook': 'Longer projects: doughs, slow sauces and whole meals that bring many patterns together.',
+};
+---
+<BaseLayout title="Journeys" description="Learn Italian cooking one dish at a time, by working through the patterns it needs">
+  <h1>Journeys</h1>
+  <p class="lead">
+    Each journey is one dish. Instead of a recipe, it takes you through the general patterns the dish needs, in the
+    order you use them, and says what's specific to this dish at each step. Cook it, and you've practised techniques
+    you'll use in dozens of other dishes.
+  </p>
+
+  {byLevel.map(({ level, journeys }) => (
+    <section>
+      <h2>{level[0].toUpperCase() + level.slice(1)}</h2>
+      <p class="level-intro">{levelIntro[level]}</p>
+      <ul class="journey-grid">
+        {journeys.map((j) => (
+          <li>
+            <a href={url(`/journeys/${j.id}/`)}>
+              <span class="j-title">{j.data.title}</span>
+              {j.data.italian && <span class="j-italian">{j.data.italian}</span>}
+              <span class="j-intro">{j.data.intro}</span>
+              <span class="j-meta">{j.data.course} · {j.data.region} · {j.data.steps.length} steps · {j.data.time}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>
+
+<style>
+  section { margin-top: 2.5rem; }
+  section h2 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+  .level-intro { color: var(--color-muted); margin-top: 0; }
+  .journey-grid {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: 1rem;
+  }
+  .journey-grid a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    height: 100%;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+  }
+  .journey-grid a:hover { border-color: var(--color-accent); text-decoration: none; }
+  .j-title { font-weight: 600; font-size: 1.05rem; font-family: var(--font-display); }
+  .j-italian { font-style: italic; color: var(--color-accent); font-size: 0.9rem; }
+  .j-intro { color: var(--color-muted); font-size: 0.9rem; }
+  .j-meta { margin-top: auto; padding-top: 0.4rem; font-size: 0.78rem; color: var(--color-muted); }
+</style>

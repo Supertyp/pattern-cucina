@@ -1,0 +1,129 @@
+---
+import { url } from '../lib/url';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getClusterGroups, getPatterns, getRelatedMap, getJourneys } from '../lib/patterns';
+
+const [patterns, groups, relatedMap, journeys] = await Promise.all([
+  getPatterns(),
+  getClusterGroups(),
+  getRelatedMap(),
+  getJourneys(),
+]);
+const linkCount = [...relatedMap.values()].reduce((n, r) => n + r.length, 0) / 2;
+const firstSteps = journeys.filter((j) => j.data.level === 'first steps').slice(0, 3);
+---
+<BaseLayout>
+  <h1 class="hero-title">Pattern Cucina</h1>
+  <p class="lead">
+    Learn to cook Italian food properly, one technique at a time: from choosing the olive oil and the flour, through
+    the dough, the sauce and the pan, to the table and the wine.
+  </p>
+
+  <section class="about">
+    <h2>Not a cookbook</h2>
+    <p>
+      A recipe tells you what to do for one dish. It rarely tells you <em>why</em>, so when something goes wrong, or
+      you cook the next dish, you're on your own. Pattern Cucina works the other way round. It collects the
+      <strong>techniques</strong> that Italian cooking is built on, such as salting the pasta water, building a
+      soffritto, finishing pasta in the pan or stretching a pizza by hand, and explains each one as a
+      <strong>pattern</strong>: a problem that keeps coming up and a solution that reliably works.
+    </p>
+    <p>
+      Every pattern follows the same structure: the problem, when it applies, a short table of recommendations with
+      the reasons for them, when it suits and when it doesn't, how to do it, and references you can follow up,
+      often with a video.
+    </p>
+  </section>
+
+  <section class="about">
+    <h2>Learn by following a journey</h2>
+    <p>
+      A <strong>journey</strong> is one dish, cooked by working through the patterns it needs in order. At each step
+      you read the general pattern and a note on what's specific to this dish. A carbonara, for example, takes you
+      through choosing guanciale, rendering it, cooking the pasta al dente, saving the pasta water and emulsifying
+      egg and cheese off the heat. Cook three or four journeys and you'll notice the same patterns turning up again:
+      that's the point. {patterns.length} patterns across {groups.length} areas, joined by {linkCount} links,
+      make up the {journeys.length} journeys.
+    </p>
+    <ul>
+      <li><strong>Start with the first steps.</strong> Short dishes with few ingredients, where the technique is everything.</li>
+      <li><strong>Cook each dish more than once.</strong> The second time you'll read the notes less and taste more.</li>
+      <li><strong>Follow the links.</strong> Every pattern ends with related patterns and the journeys that use it.</li>
+      <li><strong>Mind the trade-offs.</strong> Each pattern says when it doesn't suit. Tradition is a guide, not a rule.</li>
+    </ul>
+    {firstSteps.length > 0 && (
+      <ul class="start-grid">
+        {firstSteps.map((j) => (
+          <li>
+            <a href={url(`/journeys/${j.id}/`)}>
+              <span class="area-name">{j.data.title}</span>
+              <span class="area-count">{j.data.steps.length} steps · {j.data.time}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+    <p class="cta-row">
+      <a href={url('/journeys/')} class="cta">Choose a journey →</a>
+      <a href={url('/patterns/')} class="cta-secondary">Browse all patterns</a>
+    </p>
+  </section>
+
+  <section>
+    <h2>From the shop to the table</h2>
+    <ul class="area-grid">
+      {groups.map(({ cluster, patterns }) => (
+        <li>
+          <a href={url(`/patterns/clusters/${cluster.id}/`)}>
+            <span class="area-name">{cluster.data.title}</span>
+            <span class="area-count">{patterns.length} {patterns.length === 1 ? 'pattern' : 'patterns'}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero-title { font-size: 2.6rem; margin-bottom: 0.75rem; }
+  section { margin-top: 2.5rem; }
+  section h2 { font-size: 1.3rem; }
+  .cta {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    background: var(--color-accent);
+    color: var(--color-bg);
+    font-weight: 500;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; }
+  .cta-secondary { margin-top: 0.5rem; font-weight: 500; }
+  .cta:hover { text-decoration: none; opacity: 0.9; }
+  .start-grid, .area-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.75rem;
+  }
+  .start-grid a, .area-grid a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+  }
+  .start-grid a:hover, .area-grid a:hover { border-color: var(--color-accent); text-decoration: none; }
+  .area-name { font-weight: 600; }
+  .area-count { color: var(--color-muted); font-size: 0.85rem; }
+  .about ul:not(.start-grid) { padding-left: 1.25rem; }
+  .start-grid { margin: 1.25rem 0 0.5rem; }
+  .about li { margin-bottom: 0.4rem; }
+  .latest { list-style: none; margin: 0; padding: 0; }
+  .latest li { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.5rem 0; border-top: 1px solid var(--color-border); }
+</style>

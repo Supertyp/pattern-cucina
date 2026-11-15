@@ -1,0 +1,158 @@
+---
+import { url } from '../../lib/url';
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getJourneys, getPatterns, inlineMarkdown } from '../../lib/patterns';
+
+export async function getStaticPaths() {
+  const [journeys, patterns] = await Promise.all([getJourneys(), getPatterns()]);
+  const byId = new Map(patterns.map((p) => [p.id, p]));
+  return journeys.map((journey, i) => ({
+    params: { slug: journey.id },
+    props: {
+      journey,
+      steps: journey.data.steps.map((s) => ({ ...s, p: byId.get(s.pattern)! })),
+      next: journeys[i + 1],
+    },
+  }));
+}
+
+const { journey, steps, next } = Astro.props;
+const { Content } = await render(journey);
+const { data } = journey;
+const patternHref = (id: string) => url(`/patterns/${id}/`);
+const journeyHref = (id: string) => url(`/journeys/${id}/`);
+---
+<BaseLayout title={data.title} description={data.intro}>
+  <article data-pagefind-body>
+    <header class="journey-header">
+      <p class="eyebrow">Journey · {data.level}</p>
+      <h1>{data.title}</h1>
+      {data.italian && <p class="italian">{data.italian}</p>}
+      <p class="lead">{data.intro}</p>
+      <dl class="facts">
+        <div><dt>Course</dt><dd>{data.course}</dd></div>
+        <div><dt>Region</dt><dd>{data.region}</dd></div>
+        <div><dt>Time</dt><dd>{data.time}</dd></div>
+        <div><dt>Serves</dt><dd>{data.serves}</dd></div>
+      </dl>
+    </header>
+
+    <section class="practise" data-pagefind-ignore>
+      <h2>Patterns you'll practise</h2>
+      <ul>
+        {steps.map((s) => (
+          <li><a href={patternHref(s.p.id)}>{s.p.data.title}</a></li>
+        ))}
+      </ul>
+    </section>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <section class="steps">
+      <h2>The journey, step by step</h2>
+      <p class="steps-intro">
+        Read the pattern first if it's new to you, then apply it with the note for this dish.
+      </p>
+      <ol>
+        {steps.map((s, i) => (
+          <li>
+            <span class="step-no" aria-hidden="true">{i + 1}</span>
+            <div class="step-body">
+              <div class="step-head">
+                <a href={patternHref(s.p.id)} class="step-title">{s.p.data.title}</a>
+                <span class="pattern-type">{s.p.data.type}</span>
+              </div>
+              <p class="step-note"><span class="in-dish">In this dish: </span><Fragment set:html={inlineMarkdown(s.note, patternHref, journeyHref)} /></p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <nav class="journey-nav" data-pagefind-ignore>
+      <a href={url('/journeys/')}>← All journeys</a>
+      {next && <a href={url(`/journeys/${next.id}/`)}>Next: {next.data.title} →</a>}
+    </nav>
+  </article>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    margin: 0 0 0.4rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .journey-header h1 { margin: 0; font-size: 2.1rem; }
+  .italian { margin: 0.2rem 0 0; font-style: italic; color: var(--color-muted); font-size: 1.1rem; }
+  .journey-header .lead { margin-top: 1rem; }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin: 1.25rem 0 0;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .facts dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); }
+  .facts dd { margin: 0.1rem 0 0; font-weight: 500; }
+  .practise { margin: 1.75rem 0; }
+  .practise h2, .steps-intro {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin: 0 0 0.6rem;
+  }
+  .steps-intro { text-transform: none; letter-spacing: 0; font-size: 0.9rem; }
+  .practise ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .practise li a {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-size: 0.82rem;
+  }
+  .practise li a:hover { border-color: var(--color-accent); text-decoration: none; }
+  .steps { margin-top: 2.5rem; }
+  .steps > h2 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .steps ol { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .steps li {
+    display: grid;
+    grid-template-columns: 2.1rem 1fr;
+    gap: 0.9rem;
+    padding: 1.1rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .step-no {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    background: var(--color-callout);
+    color: var(--color-accent);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; }
+  .step-title { font-weight: 600; font-size: 1.05rem; }
+  .step-note { margin: 0.4rem 0 0; }
+  .in-dish { font-weight: 600; color: var(--color-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .journey-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+    font-weight: 500;
+  }
+</style>

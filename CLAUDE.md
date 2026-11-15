@@ -18,9 +18,10 @@ Read this first when picking the project back up. Keep it up to date at the end 
 ## Where it lives
 
 - Local: `/home/u1018237/pattern_life_italian_food` (WSL2). Git repo on branch `main`.
-- Planned GitHub repo: `Supertyp/pattern-cucina`, live at https://supertyp.github.io/pattern-cucina/. The `base` in
-  `astro.config.mjs` must match the repo name. The user has to create the repo and enable Pages
-  (Settings → Pages → Source: GitHub Actions) on github.com; the `gh` CLI isn't installed.
+- Repo: https://github.com/Supertyp/pattern-cucina (public, `main`, pushed over SSH). Live site:
+  **https://supertyp.github.io/pattern-cucina/** (Pages source: GitHub Actions). The `base` in `astro.config.mjs` must
+  match the repo name. The `gh` CLI isn't installed; repo settings are changed by the user on github.com, and the
+  public GitHub API (curl) works for checking workflow runs. The user is happy for changes to be pushed.
 - `.github/workflows/deploy.yml` builds and deploys on every push to `main`.
 
 ## Content model
@@ -61,6 +62,7 @@ Read this first when picking the project back up. Keep it up to date at the end 
   with their own pages, home page rewritten around journeys.
 - 101 patterns drafted by 9 parallel subagents from `docs/writing-brief.md`; 27 journeys by 3 subagents from
   `docs/journey-brief.md`. Every reference URL was checked with curl.
+- Published to GitHub Pages the same day (first deploy took about a minute).
 - The user hasn't reviewed the content yet.
 
 ## Open points
